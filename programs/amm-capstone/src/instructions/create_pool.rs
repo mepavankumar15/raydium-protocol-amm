@@ -30,12 +30,6 @@ pub struct CreatePool<'info> {
     pub pool: Account<'info, Pool>,
 
     /// LP token mint
-    #[account(
-        init,
-        payer = payer,
-        mint::decimals = 6,
-        mint::authority = vault_authority
-    )]
     pub lp_mint: Account<'info, Mint>,
 
     /// PDA authority controlling vaults
