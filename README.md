@@ -25,6 +25,26 @@ https://explorer.solana.com/address/EEzowh3RqroMtA7rsV1S88DUurNLh64PDAK2AfDBcEZe
 
 ---
 
+# 🌐 Devnet Verification
+
+This AMM is deployed and verifiable on Solana Devnet.
+
+### 🔗 Program
+
+https://explorer.solana.com/address/EEzowh3RqroMtA7rsV1S88DUurNLh64PDAK2AfDBcEZe?cluster=devnet
+
+### 🔎 How To Verify
+
+1. Open the program link above.
+2. Click on recent transactions.
+3. Inspect `createPool`, `addLiquidity`, and `swap` instructions.
+4. Observe CPI calls to the SPL Token Program.
+5. Confirm reserve updates in Pool PDA account.
+
+This demonstrates real on-chain execution — not a local simulation.
+
+---
+
 # ✨ Features
 
 - ✅ Initialize treasury (protocol fee collection)
