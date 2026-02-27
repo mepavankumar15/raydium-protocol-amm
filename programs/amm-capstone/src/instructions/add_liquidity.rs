@@ -17,7 +17,7 @@ use crate::constants::*;
 #[derive(Accounts)]
 pub struct AddLiquidity<'info> {
 
-    #[account(mut)]
+    #[account(mut)] 
     pub user: Signer<'info>,
 
     #[account(mut)]
@@ -37,13 +37,15 @@ pub struct AddLiquidity<'info> {
 
     #[account(
         mut,
-        constraint = vault_a.mint == vault_authority.key()
+        constraint = vault_a.mint == pool.token_a_mint,
+        constraint = vault_a.owner == vault_authority.key()
     )]
     pub vault_a: Account<'info, TokenAccount>,
 
     #[account(
         mut,
-        constraint = vault_b.mint == vault_authority.key()
+        constraint = vault_b.mint == pool.token_b_mint,
+        constraint = vault_b.owner == vault_authority.key()
     )]
     pub vault_b: Account<'info, TokenAccount>,
 

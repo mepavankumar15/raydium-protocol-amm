@@ -4,112 +4,23 @@ import {
   PublicKey,
   SystemProgram,
   SYSVAR_RENT_PUBKEY,
-  Keypair,
-  Transaction,
-  sendAndConfirmTransaction,
 } from "@solana/web3.js";
 
 import {
   TOKEN_PROGRAM_ID,
   createMint,
   mintTo,
-  AccountLayout,
-  createInitializeAccountInstruction,
   getOrCreateAssociatedTokenAccount,
 } from "@solana/spl-token";
 
-import { AmmCapstone } from "../target/types/amm_capstone";
-
-/* -------------------------------------------------- */
-/* Helper: create PDA-owned token vault               */
-/* -------------------------------------------------- */
-async function createVaultAccount(
-  provider: anchor.AnchorProvider,
-  mint: PublicKey,
-  owner: PublicKey
-): Promise<PublicKey> {
-
-  const vault = Keypair.generate();
-  const connection = provider.connection;
-
-  const lamports =
-    await connection.getMinimumBalanceForRentExemption(
-      AccountLayout.span
-    );
-    
-
-  const tx = new Transaction().add(
-    SystemProgram.createAccount({
-      fromPubkey: provider.wallet.publicKey,
-      newAccountPubkey: vault.publicKey,
-      space: AccountLayout.span,
-      lamports,
-      programId: TOKEN_PROGRAM_ID,
-    }),
-    createInitializeAccountInstruction(
-      vault.publicKey,
-      mint,
-      owner
-    )
-  );
-
-  await sendAndConfirmTransaction(
-    connection,
-    tx,
-    [(provider.wallet as any).payer, vault]
-  );
-
-  return vault.publicKey;
-}
-
-/* -------------------------------------------------- */
-/* TEST SUITE                                         */
-/* -------------------------------------------------- */
-async function initVaultPda(
-  provider: anchor.AnchorProvider,
-  vaultPda: PublicKey,
-  mint: PublicKey,
-  owner: PublicKey,
-  programId: PublicKey
-) {
-
-  const connection = provider.connection;
-  const payer = (provider.wallet as any).payer;
-
-  const lamports =
-    await connection.getMinimumBalanceForRentExemption(
-      AccountLayout.span
-    );
-
-  const tx = new Transaction().add(
-    SystemProgram.createAccount({
-      fromPubkey: payer.publicKey,
-      newAccountPubkey: vaultPda,
-      space: AccountLayout.span,
-      lamports,
-      programId: TOKEN_PROGRAM_ID,
-    }),
-    createInitializeAccountInstruction(
-      vaultPda,
-      mint,
-      owner
-    )
-  );
-
-  await sendAndConfirmTransaction(
-    connection,
-    tx,
-    [payer]
-  );
-}
+import { AmmCapstone } from "../target/types/amm_capstone"; 
+import { expect } from "chai";
 
 describe("amm-capstone", () => {
-
   const provider = anchor.AnchorProvider.env();
   anchor.setProvider(provider);
 
-  const program =
-    anchor.workspace.AmmCapstone as Program<AmmCapstone>;
+  const program = anchor.workspace.AmmCapstone as Program<AmmCapstone>;
 
   const wallet = provider.wallet as anchor.Wallet;
   const payer = (wallet as any).payer;
@@ -129,20 +40,20 @@ describe("amm-capstone", () => {
   let tokenAMint: PublicKey;
   let tokenBMint: PublicKey;
   let lpMint: PublicKey;
-
+ 
   let userTokenA: PublicKey;
   let userTokenB: PublicKey;
   let userLp: PublicKey;
 
+  // These are now PDAs, not Keypairs
   let vaultA: PublicKey;
   let vaultB: PublicKey;
 
   /* -------------------------------------------------- */
   /* GLOBAL SETUP                                       */
   /* -------------------------------------------------- */
-    
-  before(async () => {
 
+  before(async () => {
     // ---------- PDAs ----------
     [treasuryPda] = PublicKey.findProgramAddressSync(
       [TREASURY_SEED],
@@ -171,12 +82,9 @@ describe("amm-capstone", () => {
       6
     );
 
+    // Derive Pool PDA
     [poolPda] = PublicKey.findProgramAddressSync(
-      [
-        POOL_SEED,
-        tokenAMint.toBuffer(),
-        tokenBMint.toBuffer(),
-      ],
+      [POOL_SEED, tokenAMint.toBuffer(), tokenBMint.toBuffer()],
       program.programId
     );
 
@@ -186,6 +94,30 @@ describe("amm-capstone", () => {
       vaultAuthorityPda,
       null,
       6
+    );
+
+    // ---------- DERIVE VAULT PDAs (FIXED) ----------
+    // We do NOT create these manually anymore. We derive the address
+    // that the program expects to initialize.
+    
+    [vaultA] = PublicKey.findProgramAddressSync(
+      [
+        POOL_SEED, 
+        tokenAMint.toBuffer(), 
+        tokenBMint.toBuffer(), 
+        VAULT_A_SEED
+      ],
+      program.programId
+    );
+
+    [vaultB] = PublicKey.findProgramAddressSync(
+      [
+        POOL_SEED, 
+        tokenAMint.toBuffer(), 
+        tokenBMint.toBuffer(), 
+        VAULT_B_SEED
+      ],
+      program.programId
     );
 
     // ---------- USER TOKEN ACCOUNTS ----------
@@ -216,22 +148,6 @@ describe("amm-capstone", () => {
       )
     ).address;
 
-    
-
-    // ---------- PDA VAULT ACCOUNTS ----------
-  // ---------- VAULT TOKEN ACCOUNTS (CORRECT WAY) ----------
-vaultA = await createVaultAccount(
-  provider,
-  tokenAMint,
-  vaultAuthorityPda
-);
-
-vaultB = await createVaultAccount(
-  provider,
-  tokenBMint,
-  vaultAuthorityPda
-);
-
     // ---------- FUND USER ----------
     await mintTo(
       provider.connection,
@@ -251,14 +167,12 @@ vaultB = await createVaultAccount(
       1_000_000_000
     );
   });
-  
 
   /* -------------------------------------------------- */
   /* TEST 1: INIT TREASURY                              */
   /* -------------------------------------------------- */
 
   it("Initializes treasury", async () => {
-
     await program.methods
       .initTreasury()
       .accountsStrict({
@@ -274,7 +188,7 @@ vaultB = await createVaultAccount(
   /* -------------------------------------------------- */
 
   it("Creates liquidity pool", async () => {
-
+    // We pass vaultA/vaultB here so the program can initialize them via CPI/Context
     await program.methods
       .createPool()
       .accountsStrict({
@@ -282,6 +196,8 @@ vaultB = await createVaultAccount(
         tokenAMint,
         tokenBMint,
         pool: poolPda,
+        vaultA: vaultA, // Derived PDA
+        vaultB: vaultB, // Derived PDA
         lpMint,
         vaultAuthority: vaultAuthorityPda,
         tokenProgram: TOKEN_PROGRAM_ID,
@@ -297,12 +213,11 @@ vaultB = await createVaultAccount(
   /* -------------------------------------------------- */
 
   it("Adds liquidity", async () => {
+    const amountA = new anchor.BN(500_000_000);
+    const amountB = new anchor.BN(500_000_000);
 
     await program.methods
-      .addLiquidity(
-        new anchor.BN(500_000_000),
-        new anchor.BN(500_000_000)
-      )
+      .addLiquidity(amountA, amountB)
       .accountsStrict({
         user: wallet.publicKey,
         pool: poolPda,
@@ -316,28 +231,151 @@ vaultB = await createVaultAccount(
         tokenProgram: TOKEN_PROGRAM_ID,
       })
       .rpc();
-     // ✅ initialize vault token accounts (REQUIRED)
-  await initVaultPda(
-    provider,
-    vaultA,
-    tokenAMint,
-    vaultAuthorityPda,
-    program.programId
-  );
 
-  await initVaultPda(
-    provider,
-    vaultB,
-    tokenBMint,
-    vaultAuthorityPda,
-    program.programId
-  );
-
-    const poolAccount =
-      await program.account.pool.fetch(poolPda);
-
+    // Verify state
+    const poolAccount = await program.account.pool.fetch(poolPda);
     console.log("Reserve A:", poolAccount.reserveA.toString());
     console.log("Reserve B:", poolAccount.reserveB.toString());
   });
 
+  /* -------------------------------------------------- */
+/* TEST 4: SWAP TOKEN A -> TOKEN B                    */
+/* -------------------------------------------------- */
+
+it("Swaps token A → token B", async () => {
+
+  // -----------------------------
+  // Fetch pool BEFORE swap
+  // -----------------------------
+  const poolBefore = await program.account.pool.fetch(poolPda);
+
+  const reserveABefore = poolBefore.reserveA.toNumber();
+  const reserveBBefore = poolBefore.reserveB.toNumber();
+
+  console.log("Before Swap:");
+  console.log("Reserve A:", reserveABefore);
+  console.log("Reserve B:", reserveBBefore);
+
+  // -----------------------------
+  // User balances BEFORE
+  // -----------------------------
+  const userABefore =
+    Number(
+      (await provider.connection.getTokenAccountBalance(userTokenA))
+        .value.amount
+    );
+
+  const userBBefore =
+    Number(
+      (await provider.connection.getTokenAccountBalance(userTokenB))
+        .value.amount
+    );
+
+  // -----------------------------
+  // Swap params
+  // -----------------------------
+  const amountIn = new anchor.BN(100_000_000); // 0.1 token
+  const minOut = new anchor.BN(1); // minimal slippage guard
+
+  await program.methods
+    .swap(amountIn, minOut)
+    .accountsStrict({
+      user: wallet.publicKey,
+      pool: poolPda,
+      userInput: userTokenA,
+      userOutput: userTokenB,
+      vaultA,
+      vaultB,
+      vaultAuthority: vaultAuthorityPda,
+      treasury: treasuryPda,
+      tokenProgram: TOKEN_PROGRAM_ID,
+    })
+    .rpc();
+
+  // -----------------------------
+  // Fetch pool AFTER swap
+  // -----------------------------
+  const poolAfter = await program.account.pool.fetch(poolPda);
+
+  const reserveAAfter = poolAfter.reserveA.toNumber();
+  const reserveBAfter = poolAfter.reserveB.toNumber();
+
+  console.log("After Swap:");
+  console.log("Reserve A:", reserveAAfter);
+  console.log("Reserve B:", reserveBAfter);
+
+  // -----------------------------
+  // User balances AFTER
+  // -----------------------------
+  const userAAfter =
+    Number(
+      (await provider.connection.getTokenAccountBalance(userTokenA))
+        .value.amount
+    );
+
+  const userBAfter =
+    Number(
+      (await provider.connection.getTokenAccountBalance(userTokenB))
+        .value.amount
+    );
+
+  // -----------------------------
+  // Assertions
+  // -----------------------------
+
+  // User spent token A
+  expect(userAAfter).to.be.lessThan(userABefore);
+
+  // User received token B
+  expect(userBAfter).to.be.greaterThan(userBBefore);
+
+  // Pool reserve A increased
+  expect(reserveAAfter).to.be.greaterThan(reserveABefore);
+
+  // Pool reserve B decreased
+  expect(reserveBAfter).to.be.lessThan(reserveBBefore);
+
+  // Constant product invariant check
+  const kBefore = reserveABefore * reserveBBefore;
+  const kAfter = reserveAAfter * reserveBAfter;
+
+  expect(kAfter).to.be.greaterThanOrEqual(kBefore);
+  });
+
+  /* -------------------------------------------------- */
+/* TEST 5: SLIPPAGE PROTECTION                        */
+/* -------------------------------------------------- */
+
+it("Fails swap when slippage exceeds limit", async () => {
+
+  const amountIn = new anchor.BN(10_000_000); // small input
+
+  // Impossible minimum output (forces failure)
+  const impossibleMinOut = new anchor.BN(1_000_000_000);
+
+  let failed = false;
+
+  try {
+    await program.methods
+      .swap(amountIn, impossibleMinOut)
+      .accountsStrict({
+        user: wallet.publicKey,
+        pool: poolPda,
+        userInput: userTokenA,
+        userOutput: userTokenB,
+        vaultA,
+        vaultB,
+        vaultAuthority: vaultAuthorityPda,
+        treasury: treasuryPda,
+        tokenProgram: TOKEN_PROGRAM_ID,
+      })
+      .rpc();
+  } catch (err) {
+    console.log("Expected slippage failure:", err.toString());
+    failed = true;
+  }
+
+  // The transaction MUST fail
+  expect(failed).to.equal(true);
+  });
 });

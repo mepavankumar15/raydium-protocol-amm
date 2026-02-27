@@ -5,3 +5,8 @@ target
 node_modules
 test-ledger
 .yarn
+.vscode/
+.idea/
+*.json
+!package.json
+!tsconfig.json

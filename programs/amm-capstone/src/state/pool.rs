@@ -1,30 +1,27 @@
+// programs/amm-capstone/src/state/pool.rs
+
 use anchor_lang::prelude::*;
 
 #[account]
 pub struct Pool {
-    pub token_a_mint: Pubkey,
-    pub token_b_mint: Pubkey,
+    pub authority: Pubkey,      // 32
+    pub token_a_mint: Pubkey,   // 32
+    pub token_b_mint: Pubkey,   // 32
+    
+    // --- ENSURE THESE EXIST ---
+    pub vault_a: Pubkey,        // 32
+    pub vault_b: Pubkey,        // 32
+    // --------------------------
 
-    pub vault_authority: Pubkey,
-    pub vault_a: Pubkey,
-    pub vault_b: Pubkey,
-    pub lp_mint: Pubkey,
-
-    pub reserve_a: u64,
-    pub reserve_b: u64,
-
-    pub fee_bps: u16,
+    pub vault_authority: Pubkey,// 32
+    pub lp_mint: Pubkey,        // 32
+    pub reserve_a: u64,         // 8
+    pub reserve_b: u64,         // 8
+    pub fee_bps: u16,           // 2
 }
 
 impl Pool {
-    pub const LEN: usize = 32 + 32 + 32 + 32 + 32 + 32 + 8 + 8 + 2;
-    // token A
-    // token B
-    // authority
-    // vault A
-    // vault B
-    // lp mint
-    // reserve A
-    // reserve B
-    // fee
+    // 8 discriminator + 32*6 + 8*2 + 2 = 210 bytes (approx)
+    // Ensure you have enough space. A safe buffer is usually:
+    pub const LEN: usize = 8 + 32 + 32 + 32 + 32 + 32 + 32 + 8 + 8 + 2 + 64; 
 }

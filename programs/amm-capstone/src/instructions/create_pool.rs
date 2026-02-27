@@ -1,5 +1,5 @@
 use anchor_lang::prelude::*;
-use anchor_spl::token::{Mint, Token};
+use anchor_spl::token::{Mint, Token, TokenAccount}; // Import TokenAccount
 use crate::state::pool::*;
 use crate::constants::*;
 
@@ -9,13 +9,9 @@ pub struct CreatePool<'info> {
     #[account(mut)]
     pub payer: Signer<'info>,
 
-    /// Token A mint
     pub token_a_mint: Account<'info, Mint>,
-
-    /// Token B mint
     pub token_b_mint: Account<'info, Mint>,
 
-    /// Pool PDA
     #[account(
         init,
         payer = payer,
@@ -29,10 +25,40 @@ pub struct CreatePool<'info> {
     )]
     pub pool: Account<'info, Pool>,
 
-    /// LP token mint
+    // --- ADD THIS: Vault A Initialization ---
+    #[account(
+        init,
+        payer = payer,
+        seeds = [
+            POOL_SEED,
+            token_a_mint.key().as_ref(),
+            token_b_mint.key().as_ref(),
+            b"vault_a" // Must match the seed in your test
+        ],
+        bump,
+        token::mint = token_a_mint,
+        token::authority = vault_authority
+    )]
+    pub vault_a: Account<'info, TokenAccount>,
+
+    // --- ADD THIS: Vault B Initialization ---
+    #[account(
+        init,
+        payer = payer,
+        seeds = [
+            POOL_SEED,
+            token_a_mint.key().as_ref(),
+            token_b_mint.key().as_ref(),
+            b"vault_b" // Must match the seed in your test
+        ],
+        bump,
+        token::mint = token_b_mint,
+        token::authority = vault_authority
+    )]
+    pub vault_b: Account<'info, TokenAccount>,
+
     pub lp_mint: Account<'info, Mint>,
 
-    /// PDA authority controlling vaults
     /// CHECK: PDA authority
     #[account(
         seeds = [VAULT_AUTH_SEED],

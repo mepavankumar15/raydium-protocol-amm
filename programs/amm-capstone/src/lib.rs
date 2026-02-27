@@ -16,12 +16,12 @@ pub mod utils;
 
 use instructions::*;
 use anchor_spl::token::{Burn , burn};
-use crate::constants::*;
+use crate::constants::*; 
 use crate::math::*;
 use crate::events::*;
-use errors::AmmError;
+use errors::AmmError; 
 
-declare_id!("F6SEFWxhBryxMrCwdD9jzaL2MZe6dtZBqzEwCRFsXodf");
+declare_id!("EEzowh3RqroMtA7rsV1S88DUurNLh64PDAK2AfDBcEZe");
 
 #[program]
 pub mod amm_capstone {
@@ -37,6 +37,11 @@ pub mod amm_capstone {
         pool.token_b_mint = ctx.accounts.token_b_mint.key();
         pool.vault_authority = ctx.accounts.vault_authority.key();
         pool.lp_mint = ctx.accounts.lp_mint.key();
+
+        // --- ADD THESE LINES ---
+    // We must save the vault addresses so we can verify them later!
+    pool.vault_a = ctx.accounts.vault_a.key();
+    pool.vault_b = ctx.accounts.vault_b.key();
 
         pool.reserve_a = 0;
         pool.reserve_b = 0;
