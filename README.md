@@ -1,3 +1,8 @@
+![Solana](https://img.shields.io/badge/Solana-Devnet-purple)
+![Anchor](https://img.shields.io/badge/Anchor-0.32-blue)
+![Rust](https://img.shields.io/badge/Rust-Program-orange)
+![License](https://img.shields.io/badge/License-MIT-green)
+![Status](https://img.shields.io/badge/Status-Active-success)
 # 🚀 Solana AMM — Constant Product Automated Market Maker (Anchor)
 
 A fully functional **Automated Market Maker (AMM)** built using **Solana + Anchor**, inspired by protocols like Raydium and Uniswap V2.
@@ -164,8 +169,8 @@ Install:
 Clone repository:
 
 ```bash
-git clone https://github.com/mepavankumar15/amm-capstone.git
-cd amm-capstone
+git clone https://github.com/mepavankumar15/raydium-protocol-amm.git
+cd raydium-protocol-amm
 ```
 
 Install dependencies:
