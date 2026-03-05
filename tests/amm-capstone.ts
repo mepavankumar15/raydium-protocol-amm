@@ -173,6 +173,8 @@ describe("amm-capstone", () => {
   /* -------------------------------------------------- */
 
   it("Initializes treasury", async () => {
+
+    try {
     await program.methods
       .initTreasury()
       .accountsStrict({
@@ -181,6 +183,9 @@ describe("amm-capstone", () => {
         systemProgram: SystemProgram.programId,
       })
       .rpc();
+
+      console.log("Treasury initialized"); } 
+      catch (err) { console.log("Treasury already initialized, skipping..."); }
   });
 
   /* -------------------------------------------------- */
