@@ -16,12 +16,12 @@ This project implements a secure, PDA-based constant product liquidity pool with
 **Devnet Program ID:**
 
 ```
-EEzowh3RqroMtA7rsV1S88DUurNLh64PDAK2AfDBcEZe
+7kkDWEga2EJyMARYWH7SwjEBqCfpPWbzdQLDZB5psQ4F
 ```
 
 View on Solana Explorer:
 
-https://explorer.solana.com/address/EEzowh3RqroMtA7rsV1S88DUurNLh64PDAK2AfDBcEZe?cluster=devnet
+https://explorer.solana.com/address/7kkDWEga2EJyMARYWH7SwjEBqCfpPWbzdQLDZB5psQ4F?cluster=devnet
 
 ---
 
@@ -31,7 +31,7 @@ This AMM is deployed and verifiable on Solana Devnet.
 
 ### 🔗 Program
 
-https://explorer.solana.com/address/EEzowh3RqroMtA7rsV1S88DUurNLh64PDAK2AfDBcEZe?cluster=devnet
+https://explorer.solana.com/address/7kkDWEga2EJyMARYWH7SwjEBqCfpPWbzdQLDZB5psQ4F?cluster=devnet
 
 ### 🔎 How To Verify
 
@@ -312,7 +312,7 @@ Ensures swaps fail when `min_out` is unrealistic.
 
 ### View Program
 
-https://explorer.solana.com/address/EEzowh3RqroMtA7rsV1S88DUurNLh64PDAK2AfDBcEZe?cluster=devnet
+https://explorer.solana.com/address/7kkDWEga2EJyMARYWH7SwjEBqCfpPWbzdQLDZB5psQ4F?cluster=devnet
 
 ### View Pool PDA
 
