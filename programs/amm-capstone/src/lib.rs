@@ -21,7 +21,7 @@ use crate::math::*;
 use crate::events::*;
 use errors::AmmError; 
 
-declare_id!("EEzowh3RqroMtA7rsV1S88DUurNLh64PDAK2AfDBcEZe");
+declare_id!("7kkDWEga2EJyMARYWH7SwjEBqCfpPWbzdQLDZB5psQ4F");
 
 #[program]
 pub mod amm_capstone {
